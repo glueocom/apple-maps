@@ -48,15 +48,16 @@ try {
 
 ## Data Cleaning
 
-Clean data before pushing to dataset:
+Normalize and trim before pushing to dataset:
 
 ```typescript
-const cleanData = {
-    url: request.url,
-    title: title?.trim() || null,
-    price: parseFloat(priceText.replace(/[^0-9.]/g, '')) || null,
+const place = {
+    name: name?.trim() || null,
+    latitude: coords?.latitude ?? null,
+    longitude: coords?.longitude ?? null,
+    address: formatAddress(rawAddress),
     scrapedAt: new Date().toISOString(),
 };
 
-await Actor.pushData(cleanData);
+await Actor.pushData(place);
 ```

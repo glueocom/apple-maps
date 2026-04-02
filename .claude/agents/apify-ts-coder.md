@@ -1,7 +1,7 @@
 ---
 name: apify-ts-coder
 description: Use PROACTIVELY for any TypeScript/JavaScript coding tasks in this Apple Maps scraper. Write or refactor Crawlee PlaywrightCrawler code, MapKit JS interception logic, input/output schemas, and data normalization. Also handles Apify platform patterns (PPE pricing, proxy config, graceful abort).
-tools: mcp__apify__*
+tools: Read, Write, Edit, MultiEdit, Glob, Grep, Bash, mcp__apify__*
 skills: apify-ops, apify-schemas
 model: opus
 color: green
