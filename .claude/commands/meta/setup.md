@@ -45,6 +45,11 @@ Compare inventory against codebase. Find:
 - `.mcp.json` deprecated transport — prefer `type: http` with hosted URL over stdio `npx` when available
 - Skills with stale SDK API references — grep for method names and verify against installed package versions
 - `AGENTS.md` CLI commands that don't match current `apify help` output (e.g., missing `--resurrect`, wrong subcommand names)
+- `CLAUDE.md` missing mcpc usage block under MCP servers section — agents should prefer mcpc over direct MCP tool calls
+- `CLAUDE.md` missing `## Security` section with scraped-data handling rules
+- `CLAUDE.md` missing Crawlee llms.txt resource links
+- `.actor/actor.json` missing or stale `meta.generatedBy` field
+- `apify-ops` skill missing mcpc-preference section before Tool Selection Guide
 
 **Gaps:**
 - Missing agents for technology domains in use
@@ -84,6 +89,21 @@ diff <(grep -oE '\*\*[A-Za-z]+\*\*' CLAUDE.md | tr -d '*' | tr '[:upper:]' '[:lo
 
 # No stale SDK methods in skills
 grep -rn 'chargeableWithinLimit\|eventChargeLimitReached(' .claude/skills/ && echo "WARN: stale SDK methods found"
+
+# CLAUDE.md has mcpc usage block
+grep -q 'mcpc' CLAUDE.md && echo "OK: mcpc referenced" || echo "MISSING: mcpc usage in CLAUDE.md"
+
+# CLAUDE.md has Security section
+grep -q '## Security' CLAUDE.md && echo "OK: Security section" || echo "MISSING: Security section in CLAUDE.md"
+
+# CLAUDE.md has Crawlee llms.txt links
+grep -q 'crawlee.dev/llms' CLAUDE.md && echo "OK: Crawlee docs linked" || echo "MISSING: Crawlee llms.txt in CLAUDE.md"
+
+# actor.json has generatedBy
+grep -q 'generatedBy' .actor/actor.json && echo "OK: generatedBy set" || echo "MISSING: generatedBy in actor.json"
+
+# apify-ops skill has mcpc preference
+grep -q 'mcpc' .claude/skills/apify-ops/SKILL.md && echo "OK: mcpc in apify-ops" || echo "MISSING: mcpc preference in apify-ops"
 ```
 
 Report summary: files deleted, created, modified, trimmed, validation issues.

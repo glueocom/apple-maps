@@ -7,6 +7,25 @@ description: Apify platform operations including builds, runs, storage, and depl
 
 Comprehensive workflows for managing Actors on the Apify platform using MCP tools, CLI, and API.
 
+## Prefer mcpc for MCP tool calls
+
+Direct `mcp__apify__*` function calls load full tool schemas and are token-expensive.
+Prefer the `mcpc` CLI from Bash for any discovery or one-off tool calls:
+
+```bash
+# List all available tools (no schema loading)
+mcpc --json @apify tools-list
+
+# Get schema for a specific tool
+mcpc --json @apify tools-get get-dataset-items
+
+# Call a tool
+mcpc --json @apify tools-call get-actor-run runId:="<id>"
+```
+
+Use direct `mcp__apify__*` calls only when mcpc is unavailable or when tool results
+need to be passed directly into the agent context without shell parsing.
+
 ## Tool Selection Guide
 
 | Operation | Best Tool | Why |
