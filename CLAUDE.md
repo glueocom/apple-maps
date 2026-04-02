@@ -12,8 +12,6 @@
 - `@scraper-coder` — primary implementation agent for this actor (routes, interception, normalization)
 - `@apify-ts-coder` — TypeScript patterns, type definitions, general refactoring  
 - `@network-interceptor` — live Playwright MCP browser exploration of `maps.apple.com` API endpoints
-- `@debugger` — runtime error diagnosis (read-only, never modifies code)
-- `@schema-expert` — `.actor/input_schema.json`, output/dataset schemas, Console UI
 - `@code-reviewer` — post-change code review against checklist
 - `@test-runner` — `npm test` and local `apify run` validation
 

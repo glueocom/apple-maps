@@ -7,15 +7,8 @@
       "Read(/Users/miroslavsekera/r/**)",
       "Write(/Users/miroslavsekera/r/**)",
       "Edit(/Users/miroslavsekera/r/**)",
-      "mcp__next-devtools__*",
       "mcp__playwright__*",
       "mcp__apify__*",
-      "mcp__shadcn__*",
-      "mcp__svg-maker__*",
-      "mcp__gsc__*",
-      "mcp__lighthouse__*",
-      "mcp__cloudflare__*",
-      "mcp__sitemap__*",
       "mcp__claude_ai_Gmail__*"
     ],
     "deny": [
@@ -59,7 +52,5 @@
     "playwright",
     "fetch"
   ],
-  "enabledPlugins": {
-    "frontend-design@claude-code-plugins": true
-  }
+  "enabledPlugins": {}
 }

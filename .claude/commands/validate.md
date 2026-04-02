@@ -11,8 +11,8 @@ Validate all Actor configuration files.
 2. Check `.actor/input_schema.json` has required fields
 3. Check `.actor/output_schema.json` if present
 4. Verify `usesStandbyMode` setting
-5. Run TypeScript compilation: `npm run build`
-6. Run linting: `npm run lint`
+5. Run TypeScript compilation: `npm run build` (includes Biome fix)
+6. Run linting: `npm run lint` (Biome check)
 
 ## Required Fields
 

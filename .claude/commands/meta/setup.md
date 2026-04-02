@@ -1,189 +1,124 @@
 ---
-description: Audit, cleanup, research, and update the entire .claude/ setup — agents, skills, commands, rules, MCP servers, settings, activation patterns. No args = full audit + cleanup + update. With path = fix specific file/folder.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch, Task, AskUserQuestion
+description: Audit, cleanup, and update the .claude/ setup — agents, skills, commands, rules, MCP servers, settings. No args = full audit. With path = fix specific file/folder.
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 model: claude-opus-4-6
 argument-hint: [path to .md file or folder in .claude/]
 ---
 
-# Claude Setup — Audit, Cleanup, Research, and Update
+# Claude Setup — Audit, Cleanup, and Update
 
-Comprehensive audit, cleanup, and update of the `.claude/` ecosystem. Scans the codebase, identifies orphaned/stale/bloated files, asks user about cleanup, then creates missing content and validates everything.
+Audit and fix the `.claude/` ecosystem. Scan codebase, find orphaned/stale/bloated files, ask user about cleanup, create missing content, validate.
 
-**Scope**: `.claude/` directory, `CLAUDE.md` files, `.mcp.json`, `settings.json`. Does NOT touch `prompts/` (backup) or actual repo code.
+**Scope**: `.claude/`, `CLAUDE.md`, `.mcp.json`, `settings.json`. Does NOT touch `prompts/` or repo source code.
 
-## Mode
+**Mode**: No args = full audit. With path = fix that file/folder only.
 
-- **No arguments**: Full audit + cleanup + update of entire `.claude/` directory
-- **With path**: Fix specific .md file or folder only
+## Step INVENTORY
 
-## Step INVENTORY: Catalog Current Setup
+Get line counts and read frontmatter for every file:
 
-Read every file in `.claude/`:
-
-```
-.claude/agents/**/*.md     → name, description, tools, skills, model, line count
-.claude/skills/**/SKILL.md → name, description, version, frontmatter fields used
-.claude/commands/**/*.md   → description, argument-hint, allowed-tools, line count
-.claude/rules/**/*.md      → purpose (first heading + paragraph)
+```bash
+# One-liner to inventory all .claude/ files with line counts
+for f in .claude/agents/*.md; do echo "$(wc -l < "$f") $f"; done
+for f in .claude/skills/*/SKILL.md; do echo "$(wc -l < "$f") $f"; done
+find .claude/commands -name "*.md" -exec sh -c 'echo "$(wc -l < "$1") $1"' _ {} \;
 ```
 
-Also read: `CLAUDE.md`, `settings.json`, `.mcp.json`.
+Also read: `CLAUDE.md`, `.claude/settings.json`, `.mcp.json`, `.claude/rules/*.md`.
 
-Track **line counts** for every file — needed for bloat detection in cleanup.
+In path-specific mode, read only the target.
 
-If running in path-specific mode, read only the target file/folder.
+## Step CODEBASE_SCAN
 
-## Step CODEBASE_SCAN: Map Technology Domains
+Read `package.json`, `src/` files, `.actor/actor.json`, `tsconfig.json`, `biome.json`, `Dockerfile` to build a technology domain map.
 
-Scan the actual codebase to understand what technologies are in use:
+This repo: **TypeScript Apify Actor** using **Crawlee PlaywrightCrawler** scraping `maps.apple.com` via **MapKit JS API network interception** (not DOM parsing). Linting/formatting via **Biome** (not ESLint/Prettier).
 
-- Read `package.json` — extract framework/library dependencies
-- Read `src/` files — understand the actor's architecture and patterns
-- Check for `.actor/`, `actor.json` — Apify actor configuration
-- Check for `tsconfig.json`, `vitest.config.*` — build and test setup
-- Read `Dockerfile` — deployment configuration
+Key domains: network interception (`api.apple-mapkit.com`), Playwright automation, Apify platform (PPE, proxy, schemas), MapKit JS API, Ghostery cookie consent.
 
-### Apple Maps Actor specifics
+Skip in path-specific mode.
 
-This repo is a **TypeScript Apify Actor** using **Crawlee PlaywrightCrawler** that scrapes `maps.apple.com` via **MapKit JS API network interception** (not DOM parsing).
+## Step GAP_ANALYSIS
 
-Key technology domains to validate coverage for:
-- **Network interception** — `page.on('response')` for `api.apple-mapkit.com` endpoints
-- **Playwright browser automation** — service worker blocking, cookie consent
-- **Apify platform** — PPE pricing, proxy configuration, dataset schemas
-- **MapKit JS API** — search, place detail, autocomplete endpoints
+Compare inventory against codebase. Build two lists:
 
-Build a technology domain map: which technologies exist and which `.claude/` files cover them.
+### Cleanup candidates
 
-Skip this step in path-specific mode.
-
-## Step GAP_ANALYSIS: Identify Gaps AND Cleanup Candidates
-
-Compare inventory against codebase domains. Build two lists: **gaps** (missing) and **cleanup** (orphaned/stale/bloated).
-
-### Cleanup candidates to identify
-
-- **Orphaned skills** — skills for technologies not used in this actor
-- **Orphaned agents** — agents for tech domains not present (e.g., CSS selector agents in a network-interception actor)
-- **Completed one-time commands** — commands whose task is verified done
-- **Stale commands** — commands with outdated paths or references to removed MCP servers
-- **Bloated agents** — agents over 100 lines. Suggest trimming: extract to skill resources, reference rules instead of repeating content.
-- **Invalid frontmatter** — skills/agents with unrecognized fields. Valid skill fields: `name`, `displayName`, `description`, `version`. Flag anything else.
-- **Redundant MCP servers** — servers overlapping with built-in tools (e.g., `filesystem` MCP vs native Read/Write/Edit)
-- **Stale CLAUDE.md references** — version inconsistencies, TODO comments, incomplete agent/skill lists
-- **Missing settings permissions** — MCP servers in `.mcp.json` with no permissions in `settings.json`
+| Check | What to look for |
+|-------|-----------------|
+| Orphaned agents/skills | For technologies not in this repo (e.g., selector-analyzer in a network-interception actor, actor-scaffold when actor already exists) |
+| Imported-from-other-repo commands | Commands referencing paths/projects that don't exist here (e.g., `apps/contextractor-apify/`, `pnpm-workspace.yaml`, `pyproject.toml`) |
+| Stale commands | References to removed tools (ESLint when using Biome), missing files, completed one-time tasks |
+| Bloated agents | Over 100 lines — trim generic philosophy, keep only actionable guidance |
+| Stale CLAUDE.md | References to agents/skills that don't exist as files |
+| Stale settings.json | MCP permissions for servers not in `.mcp.json`, irrelevant plugins |
+| Stale .mcp.json | Servers not in `settings.json` `enabledMcpjsonServers` |
 
 ### Gaps to identify
 
-- **Missing agents** — technology domains with no specialist agent
-- **Missing skills** — technologies used but no skill directory
-- **Missing commands** — common workflows without slash commands
-- **Missing rules** — conventions used across multiple files but not documented
+- Missing agents for technology domains in use
+- Missing skills for patterns used repeatedly
+- Missing commands for common workflows
+- CLAUDE.md not listing all actual agents/skills
 
-### Apple Maps-specific gap checks
+### Expected state (validate these exist)
 
-- `network-interceptor` agent exists for Playwright MCP browser exploration
-- `scraper-coder` agent exists for Apple Maps implementation
-- `mapkit-interception` skill covers endpoint patterns and response shapes
-- `cookie-consent` skill covers Ghostery adblocker setup
-- `ppe-pricing` skill covers Pay-Per-Event SDK patterns
-- `apify-proxy` skill covers residential proxy and geo-targeting
-- `.mcp.json` has all three servers: apify, playwright, fetch
-- `code-reviewer` has Apple Maps-specific checklist items
-- `selector-analyzer` agent is NOT present (irrelevant for network interception)
+| Type | Name | Purpose |
+|------|------|---------|
+| Agent | `scraper-coder` | Apple Maps implementation (routes, interception) |
+| Agent | `apify-ts-coder` | TypeScript patterns, general refactoring |
+| Agent | `network-interceptor` | Playwright MCP browser exploration |
+| Agent | `code-reviewer` | Post-change review with Apple Maps checklist |
+| Agent | `test-runner` | `npm test` and `apify run` validation |
+| Skill | `mapkit-interception` | Endpoint patterns, response shapes |
+| Skill | `cookie-consent` | Ghostery adblocker for apple.com |
+| Skill | `ppe-pricing` | Pay-Per-Event SDK patterns |
+| Skill | `apify-proxy` | Residential proxy, geo-targeting |
+| Skill | `apify-ops` | Platform operations |
+| Skill | `apify-schemas` | Input/output/dataset schemas |
+| MCP | `apify` | Actor docs, runs, storage |
+| MCP | `playwright` | Live browser with `--block-service-workers` |
+| MCP | `fetch` | HTTP without browser |
 
-### Research for gaps
+## Step CLEANUP
 
-For each identified gap, research current best practices using official documentation and Claude Code docs.
+**Interactive.** Present findings in a table (file, lines, reason) and use `AskUserQuestion` to confirm actions: **delete**, **keep**, or **trim**.
 
-Skip in path-specific mode (only check the target file).
+After confirmation:
+- Delete confirmed files, remove empty directories
+- Auto-fix invalid frontmatter and stale references
+- Trim bloated agents (extract generic content, keep actionable parts)
+- Sync `.mcp.json` ↔ `settings.json` `enabledMcpjsonServers`
+- Remove stale MCP permissions from `settings.json` `allow` list
 
-## Step CLEANUP: Ask User and Remove Orphaned/Stale/Bloated Files
+## Step FIX
 
-**This step is interactive.** Present cleanup findings grouped by category and use `AskUserQuestion` to get user confirmation before each action.
+For every agent:
+- Verify `description` has activation keywords (`Use PROACTIVELY`, `Use when`, `Use for`)
+- Verify `skills:` references resolve to existing `.claude/skills/{name}/SKILL.md`
+- Remove references to deleted skills
 
-Do NOT touch the `prompts/` folder — it's a backup.
+Sync `CLAUDE.md`:
+- List only agents that exist as files in `.claude/agents/`
+- List only skills that exist as directories in `.claude/skills/`
+- List only MCP servers present in `.mcp.json`
 
-### Present findings by category
+## Step VALIDATE
 
-For each category, show a table of candidates with file path, line count, and reason. Then ask which items to **delete**, **archive** (move to `prompts/archive/claude-setup-cleanup-YYYY-MM-DD/`), **keep**, or **trim**.
+```bash
+# Check all skill references resolve
+grep -h "^skills:" .claude/agents/*.md | tr ',' '\n' | sed 's/skills: //' | xargs -I{} test -f .claude/skills/{}/SKILL.md
 
-### Cleanup categories (in order)
+# Check MCP alignment
+diff <(grep -oE '"[a-z]+":' .mcp.json | tr -d '":' | sort) <(grep -A20 enabledMcpjsonServers .claude/settings.json | grep '"' | tr -d ' ",' | sort)
+```
 
-- **Orphaned skills** — skills for technologies not used
-- **Orphaned agents** — agents for technologies not present
-- **Completed one-time commands** — verified done
-- **Stale commands** — outdated references, completed migrations
-- **Bloated agents** (>100 lines) — suggest trimming
-- **Invalid frontmatter** — auto-fix, inform user
-- **Redundant MCP servers** — overlapping with built-in tools
-- **Stale CLAUDE.md content** — version mismatches, TODO comments (auto-fix, inform user)
-- **Missing settings permissions** — MCP servers without whitelisted permissions
+Validate:
+- Every agent has `name`, `description`, `tools`, `model` in frontmatter
+- Every skill has `name`, `description` in frontmatter
+- Every command has `description` in frontmatter
+- All skill references resolve
+- All CLAUDE.md agent/skill/MCP references match actual files
+- MCP servers aligned between `.mcp.json` and `settings.json`
 
-### After user confirmation
-
-- Archive confirmed items to `prompts/archive/claude-setup-cleanup-YYYY-MM-DD/`
-- Delete confirmed items from `.claude/`
-- Auto-fix factual corrections and invalid frontmatter
-- Trim confirmed bloated agents
-- Update `.mcp.json` and `settings.json` as needed
-
-Skip in path-specific mode (only clean up the target file if it has issues).
-
-## Step ASK_IMPROVEMENTS: Ask User About Desired Improvements
-
-Before creating new content, ask the user what they want. Use `AskUserQuestion`:
-
-- **Agents**: "These agents are proposed: [list]. Which do you want?"
-- **Skills**: "These skills are proposed: [list]. Which do you want?"
-- **Commands**: "These commands are proposed: [list]. Which do you want?"
-
-Only create items the user confirms. Skip in path-specific mode.
-
-## Step FIX_ACTIVATION: Fix Activation Patterns
-
-For every agent in `.claude/agents/**/*.md`:
-
-- Check `description` for activation keywords (`USE PROACTIVELY`, `ACTIVATE for`, `ACTIVATE when`, `Use when`)
-- If missing, add appropriate keywords based on the agent's purpose
-- Check for `skills:` field — add if missing, using relevant existing skills
-
-## Step FIX_SKILLS_REFS: Ensure Skill References Resolve
-
-For every agent with `skills:` field:
-- Verify `.claude/skills/{name}/SKILL.md` exists for each referenced skill
-- If missing: create the skill (if valuable) or remove the reference
-
-## Step CREATE_MISSING: Create Missing Agents, Skills, Commands
-
-Based on gap analysis and user confirmation, create missing files.
-
-## Step UPDATE_CLAUDE_MD: Sync CLAUDE.md
-
-Update `CLAUDE.md` to reflect changes:
-
-- Add/remove agents in the agents section
-- Add/remove skills from the skills section
-- Update MCP server references
-- Fix version references
-- Remove stale TODO comments
-- Remove references to deleted agents, skills, or commands
-
-## Step VALIDATE: Run Validation Checks
-
-After all changes, validate:
-
-- **Frontmatter**: Every agent has `name`, `description`, `tools`, `model`. Every skill has `name`, `description`. Every command has `description`.
-- **Skills references**: Every `skills:` reference resolves to an existing skill directory
-- **Cross-references**: Every rule/skill path referenced in agents or CLAUDE.md exists
-- **Activation**: Every agent has activation keywords in description
-- **MCP alignment**: Every MCP server in `.mcp.json` has permissions in `settings.json`
-
-Report results as a summary:
-- Files **deleted**: N (list them)
-- Files **archived**: N (list them)
-- Files **created**: N (list them)
-- Files **modified**: N (list them with brief change description)
-- Files **trimmed**: N (old line count → new line count)
-- Files **skipped**: N (already correct)
-- Validation issues: N (list any remaining problems)
+Report summary: files deleted, created, modified, trimmed, skipped, validation issues.
