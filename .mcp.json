@@ -1,32 +1,30 @@
 {
-  "mcpServers": {
-    "apify": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@apify/actors-mcp-server@latest",
-        "--tools",
-        "actors,docs,actor-runs,apify-storage"
-      ],
-      "env": {
-        "APIFY_TOKEN": "${APIFY_TOKEN}"
-      }
-    },
-    "playwright": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest",
-        "--browser", "chromium",
-        "--headless",
-        "--caps", "core,devtools",
-        "--block-service-workers",
-        "--viewport-size", "1280x720"
-      ]
-    },
-    "fetch": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/fetch-mcp@latest"]
+    "mcpServers": {
+        "apify": {
+            "command": "npx",
+            "args": ["-y", "@apify/actors-mcp-server@latest", "--tools", "actors,docs,actor-runs,apify-storage"],
+            "env": {
+                "APIFY_TOKEN": "${APIFY_TOKEN}"
+            }
+        },
+        "playwright": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@playwright/mcp@latest",
+                "--browser",
+                "chromium",
+                "--headless",
+                "--caps",
+                "core,devtools",
+                "--block-service-workers",
+                "--viewport-size",
+                "1280x720"
+            ]
+        },
+        "fetch": {
+            "command": "npx",
+            "args": ["-y", "@anthropic/fetch-mcp@latest"]
+        }
     }
-  }
 }
