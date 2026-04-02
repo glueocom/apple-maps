@@ -33,6 +33,14 @@ You are a senior Apify Actor code reviewer ensuring high standards for web scrap
 - [ ] Data cleaned and validated before pushing to dataset
 - [ ] Output schema defined in `.actor/output_schema.json`
 
+### Apple Maps Specifics
+- [ ] Service workers blocked in browser context (`serviceWorkers: 'block'`)
+- [ ] Network interception uses `page.on('response')` not DOM selectors
+- [ ] Proxy uses `RESIDENTIAL` group, not `DATACENTER`
+- [ ] `fromPrebuiltFull` used for Ghostery adblocker (not `fromPrebuiltAdsOnly`)
+- [ ] PPE event name `'place-found'` used consistently in `Actor.pushData()`
+- [ ] TypeScript types reference `src/types.ts` interfaces, not inline `any`
+
 ## When Invoked
 
 1. Run `git diff` to see recent changes

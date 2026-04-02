@@ -1,25 +1,58 @@
 {
     "$schema": "https://apify.com/schemas/v1/input.ide.json",
-    "title": "PlaywrightCrawler Template",
+    "title": "Apple Maps Scraper",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
-        "startUrls": {
-            "title": "Start URLs",
+        "searchQueries": {
+            "sectionCaption": "Input",
+            "title": "Search queries",
             "type": "array",
-            "description": "URLs to start with.",
-            "editor": "requestListSources",
-            "prefill": [
-                {
-                    "url": "https://apify.com"
-                }
-            ]
+            "description": "Search terms to run on Apple Maps, e.g. 'coffee shops in Prague' or 'dentists near 90210'. Each query produces up to maxResultsPerQuery results.",
+            "editor": "stringList",
+            "prefill": ["restaurants in New York"]
         },
-        "maxRequestsPerCrawl": {
-            "title": "Max Requests per Crawl",
+        "startUrls": {
+            "sectionCaption": "Input",
+            "title": "Direct Apple Maps URLs",
+            "type": "array",
+            "description": "Direct maps.apple.com URLs to scrape instead of search queries.",
+            "editor": "requestListSources"
+        },
+        "maxResultsPerQuery": {
+            "sectionCaption": "Limits",
+            "title": "Max results per query",
             "type": "integer",
-            "description": "Maximum number of requests that can be made by this crawler.",
-            "default": 100
+            "description": "Maximum number of places returned per search query.",
+            "default": 100,
+            "minimum": 1,
+            "maximum": 500
+        },
+        "locale": {
+            "sectionCaption": "Localization",
+            "title": "Language / locale",
+            "type": "string",
+            "description": "Language code passed to Apple Maps API (e.g. en-US, fr-FR, de-DE). Affects result language.",
+            "default": "en-US",
+            "editor": "textfield"
+        },
+        "countryCode": {
+            "sectionCaption": "Localization",
+            "title": "Country code",
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code for proxy geo-targeting. Drives which geographic results Apple Maps returns.",
+            "default": "US",
+            "editor": "textfield"
+        },
+        "proxyConfiguration": {
+            "sectionCaption": "Proxy",
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Residential proxies strongly recommended. Datacenter IPs are often blocked by Apple Maps. Proxy country determines geographic result bias.",
+            "editor": "proxy",
+            "prefill": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] },
+            "default": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] }
         }
-    }
+    },
+    "required": ["searchQueries"]
 }

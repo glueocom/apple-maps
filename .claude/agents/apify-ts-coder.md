@@ -1,6 +1,6 @@
 ---
 name: apify-ts-coder
-description: Use PROACTIVELY for any TypeScript/JavaScript coding tasks. Write or refactor code following strict type safety and simplicity principles. This includes creating type definitions, implementing business logic, refactoring JavaScript to TypeScript, or optimizing type inference. Also specializes in Apify Actors with Crawlee, input/output schemas, and web scraping patterns.
+description: Use PROACTIVELY for any TypeScript/JavaScript coding tasks in this Apple Maps scraper. Write or refactor Crawlee PlaywrightCrawler code, MapKit JS interception logic, input/output schemas, and data normalization. Also handles Apify platform patterns (PPE pricing, proxy config, graceful abort).
 tools: mcp__apify__*
 skills: apify-ops, apify-schemas
 model: opus
@@ -325,3 +325,41 @@ const publishedAt = article.publishedTime?.split('T')[0] ?? null;  // "2025-01-1
 
 - `.claude/skills/apify-ops/SKILL.md` — Platform operations, MCP tools, CLI
 - `.claude/skills/apify-schemas/SKILL.md` — Input, output, dataset schema specs (includes ISO 8601 standards)
+
+## Apple Maps Actor
+
+### Core architecture
+This actor scrapes `maps.apple.com` via **network interception**, not DOM parsing.
+MapKit JS makes XHR calls to `api.apple-mapkit.com/v1/search` — intercept these.
+
+### Interception pattern
+```typescript
+const results: MapKitPlace[] = [];
+
+page.on('response', async (response) => {
+  if (response.url().includes('api.apple-mapkit.com/v1/search') && response.ok()) {
+    try {
+      const data = await response.json() as MapKitSearchResponse;
+      results.push(...(data.results ?? []));
+    } catch { /* non-JSON, skip */ }
+  }
+});
+
+await page.goto(`https://maps.apple.com/?q=${encodeURIComponent(query)}`);
+await page.waitForResponse(
+  res => res.url().includes('api.apple-mapkit.com/v1/search'),
+  { timeout: 15_000 },
+);
+```
+
+### Key endpoints
+- `api.apple-mapkit.com/v1/search` — search results (main target)
+- `api.apple-mapkit.com/v1/place` — place detail enrichment
+- `cdn.apple-mapkit.com/ma/bootstrap` — auth init (401 here = nothing will load)
+
+### Non-obvious rules
+- Service workers must be blocked via `serviceWorkers: 'block'` in browser context options (`.mcp.json` also blocks them via `--block-service-workers` for MCP testing)
+- Apple Maps results are geolocation-biased by IP — proxy country drives which results you get
+- The MapKit JWT token is embedded by Apple's own frontend — no Apple Developer account needed
+- Use residential proxies (`RESIDENTIAL` group) — datacenter IPs get rate-limited
+- For PPE pricing: `await Actor.pushData(place, 'place-found')` charges + pushes in one call

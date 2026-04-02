@@ -1,13 +1,13 @@
 {
     "$schema": "https://apify.com/schemas/v1/actor.ide.json",
     "actorSpecification": 1,
-    "name": "my-actor",
-    "title": "Project Playwright Crawler Typescript",
-    "description": "Crawlee and Playwright project in typescript.",
+    "name": "apple-maps-scraper",
+    "title": "Apple Maps Scraper",
+    "description": "Scrapes Apple Maps for places, businesses, and POIs via MapKit JS API network interception. Returns name, coordinates, address, category, phone, rating, and more.",
     "version": "0.0",
     "meta": {
         "templateId": "ts-crawlee-playwright-chrome",
-        "generatedBy": "<FILL-IN-MODEL>"
+        "generatedBy": "Claude Code with claude-sonnet-4-6"
     },
     "input": "./input_schema.json",
     "output": "./output_schema.json",

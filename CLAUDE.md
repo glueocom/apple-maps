@@ -1,36 +1,38 @@
-# Apify Actor Development
+# Apple Maps Scraper — Apify Actor
 
-## Commands
+> Full instructions in AGENTS.md (imported below)
 
-```bash
-apify run              # Run Actor locally
-apify push             # Deploy to Apify platform
-apify login            # Authenticate account
-npm test               # Run tests
-npm run lint           # Lint code
-```
+@AGENTS.md
 
-## Code Style
+---
 
-- Use TypeScript with strict mode
-- Use `apify/log` for logging (censors sensitive data)
-- Use ES modules (import/export)
-- Validate input early, fail gracefully
+## Claude Code specifics
 
-## Crawler Selection
+### Agents
+- `@scraper-coder` — primary implementation agent for this actor (routes, interception, normalization)
+- `@apify-ts-coder` — TypeScript patterns, type definitions, general refactoring  
+- `@network-interceptor` — live Playwright MCP browser exploration of `maps.apple.com` API endpoints
+- `@debugger` — runtime error diagnosis (read-only, never modifies code)
+- `@schema-expert` — `.actor/input_schema.json`, output/dataset schemas, Console UI
+- `@code-reviewer` — post-change code review against checklist
+- `@test-runner` — `npm test` and local `apify run` validation
 
-- **CheerioCrawler**: Static HTML (10x faster than browsers)
-- **PlaywrightCrawler**: JavaScript-heavy sites, dynamic content
-- Use router pattern for complex crawls
+### Skills (invoke with /skill-name or mention to load)
+- `/mapkit-interception` — MapKit JS endpoint patterns, interception code, known response shapes
+- `/cookie-consent` — Ghostery adblocker setup for apple.com banners
+- `/ppe-pricing` — Pay-Per-Event SDK patterns, local testing commands
+- `/apify-proxy` — Residential proxy config, session management, geo-targeting
+- `/apify-ops` — Platform operations: builds, runs, datasets, storage
+- `/apify-schemas` — Input/output/dataset schema spec and Console UI patterns
 
-## Concurrency Settings
+### MCP servers (configured in .mcp.json)
+- **Apify** — `mcp__apify__*` — actor docs, run management, storage access
+- **Playwright** — `mcp__playwright__*` — live browser for API discovery and testing  
+  Say "use Playwright MCP" to trigger the network-interceptor agent workflow
+- **Fetch** — HTTP without a browser, for checking API responses
 
-- HTTP/Cheerio: 10-50 concurrent requests
-- Browser/Playwright: 1-5 concurrent requests
-
-## Critical Rules
-
-- NEVER disable standby mode without explicit permission
-- ALWAYS implement readiness probe for standby Actors
-- NEVER use `Dataset.getInfo()` for final counts on Cloud
-- NEVER use deprecated `additionalHttpHeaders` - use `preNavigationHooks`
+### Key non-obvious facts
+- Service workers on apple.com hide network requests — always block them
+- Apple Maps results are IP-geolocation biased — proxy country = result country
+- The MapKit JWT is Apple's own embedded token — no Developer account needed
+- Do NOT use `closeCookieModals()` — it relies on unmaintained IDCAC; use Ghostery
