@@ -34,6 +34,7 @@ Important: Before you begin, fill in the `generatedBy` property in the meta sect
 - use `apify/log` package for logging (censors sensitive data)
 - implement readiness probe handler for standby Actors
 - handle the `aborting` event to gracefully shut down when Actor is stopped
+- use `.actorignore` to exclude `node_modules/`, `storage/`, test fixtures, and prompt files from `apify push`
 
 ## Don't
 
@@ -124,7 +125,8 @@ Key points:
 
 ```bash
 # Local development
-apify run                              # Run Actor locally
+apify run                              # Run Actor locally (purges storage by default)
+apify run --resurrect                  # Run locally, keep previous storage state
 
 # Authentication & deployment
 apify login                            # Authenticate account
@@ -165,6 +167,7 @@ storage/ # Local-only storage for development (NOT synced to Cloud)
 ├── key_value_stores/ # Files, config, INPUT
 └── request_queues/ # Pending crawl requests
 Dockerfile # Container image definition
+.actorignore    # Files/dirs excluded from apify push (like .dockerignore for the CLI)
 AGENTS.md # AI agent instructions (this file)
 
 ## Local vs Cloud Storage

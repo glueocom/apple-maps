@@ -24,13 +24,19 @@
 - `/apify-schemas` — Input/output/dataset schema spec and Console UI patterns
 
 ### MCP servers (configured in .mcp.json)
-- **Apify** — `mcp__apify__*` — actor docs, run management, storage access
+- **Apify** — `mcp__apify__*` — actor docs, run management, storage access  
+  Hosted at `mcp.apify.com` via Streamable HTTP. Tools: actors, docs, runs, storage.  
+  For token-efficient discovery use `mcpc @apify tools-list` / `mcpc @apify tools-call <tool> arg:=value --json` via Bash instead of loading all schemas.
 - **Playwright** — `mcp__playwright__*` — live browser for API discovery and testing  
   Say "use Playwright MCP" to trigger the network-interceptor agent workflow
-- **Fetch** — HTTP without a browser, for checking API responses
 
 ### Key non-obvious facts
 - Service workers on apple.com hide network requests — always block them
 - Apple Maps results are IP-geolocation biased — proxy country = result country
 - The MapKit JWT is Apple's own embedded token — no Developer account needed
 - Do NOT use `closeCookieModals()` — it relies on unmaintained IDCAC; use Ghostery
+
+### CLI non-obvious facts
+- `apify run` purges local storage by default (CLI v1.1.0+) — use `apify run --resurrect` to keep previous state
+- `apify push` respects `.actorignore` to exclude files from the deployed image
+- Actor tool names in MCP use double-dash format: `apify--rag-web-browser` (not slash)

@@ -101,3 +101,34 @@ Use API when:
 - `APIFY_TOKEN` environment variable must be set
 - Apify CLI installed (`npm install -g apify-cli`) for build operations
 - MCP server configured for run/storage operations
+
+### New in CLI v1.x
+
+```bash
+# Runs
+apify runs ls --actor <actorId>        # List runs
+apify runs info <runId>                # Run details
+apify runs log <runId>                 # Run logs
+apify runs abort <runId>               # Abort a run
+
+# Datasets (alias: apify ds)
+apify datasets ls                      # List datasets
+apify datasets get-items <id>          # Download items
+
+# Key-value stores (alias: apify kvs)
+apify key-value-stores ls
+apify key-value-stores get-value <id> <key>
+
+# Builds
+apify builds add-tag -b <buildId> -t latest   # Tag a build
+apify builds remove-tag -b <buildId> -t beta
+
+# Actors
+apify actors calculate-memory         # Suggest memory for Actor
+apify actors search <query>           # Search Apify Store
+
+# Misc
+apify upgrade                          # Self-update CLI
+apify auth token                       # Print current API token
+apify secrets ls                       # List stored secrets
+```

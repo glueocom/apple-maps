@@ -23,8 +23,8 @@ await Actor.pushData(placeObject, 'place-found');
 await Actor.charge({ eventName: 'place-found', count: results.length });
 
 // Check if user's charge limit has been reached before continuing
-const cm = Actor.getChargingManager();
-if (cm.eventChargeLimitReached('place-found')) {
+const { eventChargeLimitReached } = await Actor.charge({ eventName: 'place-found' });
+if (eventChargeLimitReached) {
     log.info('Charge limit reached — stopping');
     break;
 }
@@ -53,9 +53,18 @@ ACTOR_USE_CHARGING_LOG_DATASET=true npm start
 
 ```typescript
 const cm = Actor.getChargingManager();
-cm.getPricingInfo().isPayPerEvent   // true when PPE mode is active
-cm.chargeableWithinLimit            // false when user's maxTotalCharge is reached
-cm.eventChargeLimitReached('place-found')  // per-event limit check
+cm.getPricingInfo().isPayPerEvent                        // true when PPE mode is active
+cm.getMaxTotalChargeUsd()                               // user's spending limit in USD
+cm.getChargedEventCount('place-found')                  // events charged so far
+cm.calculateMaxEventChargeCountWithinLimit('place-found') // remaining budget (Infinity = free)
+```
+
+`Actor.charge()` returns `{ eventChargeLimitReached: boolean }` — check it and stop when true.
+
+`Actor.pushData(items)` also accepts an event name as second arg and returns `ChargeResult`:
+```typescript
+const { eventChargeLimitReached } = await Actor.pushData(place, 'place-found');
+if (eventChargeLimitReached) break;
 ```
 
 ## User-controlled limit

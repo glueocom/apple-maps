@@ -1,10 +1,10 @@
 {
     "mcpServers": {
         "apify": {
-            "command": "npx",
-            "args": ["-y", "@apify/actors-mcp-server@latest", "--tools", "actors,docs,actor-runs,apify-storage"],
-            "env": {
-                "APIFY_TOKEN": "${APIFY_TOKEN}"
+            "type": "http",
+            "url": "https://mcp.apify.com?tools=actors,docs,runs,storage",
+            "headers": {
+                "Authorization": "Bearer ${APIFY_TOKEN}"
             }
         },
         "playwright": {
@@ -21,10 +21,6 @@
                 "--viewport-size",
                 "1280x720"
             ]
-        },
-        "fetch": {
-            "command": "npx",
-            "args": ["-y", "@anthropic/fetch-mcp@latest"]
         }
     }
 }

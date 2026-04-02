@@ -39,8 +39,12 @@ Compare inventory against codebase. Find:
 - Commands referencing paths/projects that don't exist here
 - Stale references to removed tools (e.g., ESLint when using Biome)
 - Bloated files over 100 lines — trim generic content, keep actionable parts
-- `CLAUDE.md` referencing agents/skills that don't exist as files
-- `.mcp.json` ↔ `settings.json` `enabledMcpjsonServers` misalignment
+- `CLAUDE.md` referencing agents/skills/MCP servers that don't exist as files or `.mcp.json` entries
+- `.mcp.json` ↔ `settings.json` `enabledMcpjsonServers` misalignment (every key in one must appear in the other)
+- `.mcp.json` stale tool category names — verify `--tools` flags match current MCP server docs
+- `.mcp.json` deprecated transport — prefer `type: http` with hosted URL over stdio `npx` when available
+- Skills with stale SDK API references — grep for method names and verify against installed package versions
+- `AGENTS.md` CLI commands that don't match current `apify help` output (e.g., missing `--resurrect`, wrong subcommand names)
 
 **Gaps:**
 - Missing agents for technology domains in use
@@ -73,6 +77,13 @@ grep -h "^skills:" .claude/agents/*.md | tr ',' '\n' | sed 's/skills: //' | xarg
 # MCP alignment
 diff <(grep -oE '"[a-z]+":' .mcp.json | tr -d '":' | sort) \
      <(grep -A20 enabledMcpjsonServers .claude/settings.json | grep '"' | tr -d ' ",' | sort)
+
+# CLAUDE.md MCP server list matches .mcp.json keys
+diff <(grep -oE '\*\*[A-Za-z]+\*\*' CLAUDE.md | tr -d '*' | tr '[:upper:]' '[:lower:]' | sort) \
+     <(grep -oE '"[a-z]+":' .mcp.json | tr -d '":' | sort)
+
+# No stale SDK methods in skills
+grep -rn 'chargeableWithinLimit\|eventChargeLimitReached(' .claude/skills/ && echo "WARN: stale SDK methods found"
 ```
 
 Report summary: files deleted, created, modified, trimmed, validation issues.

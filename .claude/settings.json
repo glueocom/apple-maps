@@ -15,8 +15,7 @@
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "apify",
-    "playwright",
-    "fetch"
+    "playwright"
   ],
   "enabledPlugins": {}
 }
