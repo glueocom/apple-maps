@@ -164,24 +164,20 @@ Define output schema matching the `PlaceResult` interface from step 5. Include a
 
 ---
 
-## Step 9 — Review, test, autofix
+## Step 9 — Review, test, deploy
 
 1. Run `npm run build` — fix any TypeScript errors
 2. Run `npm run lint` — fix any linting issues
 3. Run `npm test` if tests exist
-4. Run `apify run --purge` locally with test input:
-   ```json
-   { "searchQueries": ["coffee shops in San Francisco"], "maxResultsPerQuery": 5 }
-   ```
-5. Check dataset output for correct fields and data
-6. Use `@code-reviewer` agent to review against the Apple Maps checklist:
+4. Use `@code-reviewer` agent to review against the Apple Maps checklist:
    - Service workers blocked
    - Network interception (not DOM selectors)
    - Residential proxies
    - Ghostery `fromPrebuiltFull`
    - PPE event name `'place-found'`
    - No inline `any`
-7. Fix all issues found
+5. Fix all issues found
+6. Run `/platform:push-and-get-working` to deploy to test actor, wait for build, and run a test crawl
 
 ---
 
