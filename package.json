@@ -8,7 +8,9 @@
     },
     "dependencies": {
         "@crawlee/playwright": "^3.15.3",
+        "@ghostery/adblocker-playwright": "^2.14.1",
         "apify": "^3.7.0",
+        "cross-fetch": "^4.1.0",
         "playwright": "1.58.2"
     },
     "devDependencies": {

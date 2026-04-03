@@ -6,18 +6,71 @@
         "overview": {
             "title": "Overview",
             "transformation": {
-                "fields": ["title", "url"]
+                "fields": [
+                    "name",
+                    "address",
+                    "city",
+                    "country",
+                    "category",
+                    "phone",
+                    "website",
+                    "rating",
+                    "ratingCount",
+                    "latitude",
+                    "longitude",
+                    "searchQuery"
+                ]
             },
             "display": {
                 "component": "table",
                 "properties": {
-                    "title": {
-                        "label": "Title",
+                    "name": {
+                        "label": "Name",
                         "format": "text"
                     },
-                    "url": {
-                        "label": "URL",
+                    "address": {
+                        "label": "Address",
+                        "format": "text"
+                    },
+                    "city": {
+                        "label": "City",
+                        "format": "text"
+                    },
+                    "country": {
+                        "label": "Country",
+                        "format": "text"
+                    },
+                    "category": {
+                        "label": "Category",
+                        "format": "text"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "format": "text"
+                    },
+                    "website": {
+                        "label": "Website",
                         "format": "link"
+                    },
+                    "rating": {
+                        "label": "Rating",
+                        "format": "number"
+                    },
+                    "ratingCount": {
+                        "label": "Reviews",
+                        "format": "number"
+                    },
+                    "latitude": {
+                        "label": "Latitude",
+                        "format": "number"
+                    },
+                    "longitude": {
+                        "label": "Longitude",
+                        "format": "number"
+                    },
+                    "searchQuery": {
+                        "label": "Search Query",
+                        "format": "text"
                     }
                 }
             }

@@ -54,5 +54,5 @@
             "default": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] }
         }
     },
-    "required": ["searchQueries"]
+    "required": []
 }

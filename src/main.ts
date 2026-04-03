@@ -1,54 +1,120 @@
-/**
- * This template is a production ready boilerplate for developing with `PlaywrightCrawler`.
- * Use this to bootstrap your projects using the most up-to-date code.
- * If you're looking for examples or want to learn more, see README.
- */
-
-// For more information, see https://crawlee.dev
+import { setTimeout } from 'node:timers/promises';
+import type { RequestOptions } from '@crawlee/playwright';
 import { PlaywrightCrawler } from '@crawlee/playwright';
-// For more information, see https://docs.apify.com/sdk/js
-import { Actor } from 'apify';
-
-// this is ESM project, and as such, it requires you to specify extensions in your relative imports
-// read more about this here: https://nodejs.org/docs/latest-v18.x/api/esm.html#mandatory-file-extensions
-// note that we need to use `.js` even when inside TS files
+import { Actor, log } from 'apify';
+import { blockAdsAndConsent } from './cookies.js';
+import { setupPlaceInterception, setupSearchInterception } from './interceptor.js';
 import { router } from './routes.js';
+import type { AppleMapsResult, Input } from './types.js';
+import { buildSearchUrl } from './utils.js';
 
-interface Input {
-    startUrls: {
-        url: string;
-        method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
-        headers?: Record<string, string>;
-        userData: Record<string, unknown>;
-    }[];
-    maxRequestsPerCrawl: number;
-}
-
-// Initialize the Apify SDK
 await Actor.init();
 
-// Structure of input is defined in input_schema.json
-const { startUrls = ['https://apify.com'], maxRequestsPerCrawl = 100 } =
-    (await Actor.getInput<Input>()) ?? ({} as Input);
+Actor.on('aborting', async () => {
+    await setTimeout(1000);
+    await Actor.exit();
+});
 
-// `checkAccess` flag ensures the proxy credentials are valid, but the check can take a few hundred milliseconds.
-// Disable it for short runs if you are sure your proxy configuration is correct
-const proxyConfiguration = await Actor.createProxyConfiguration({ checkAccess: true });
+await Actor.charge({ eventName: 'init' });
+
+const input = await Actor.getInput<Input>();
+if (!input) {
+    await Actor.fail('No input provided');
+    throw new Error('unreachable');
+}
+
+const {
+    searchQueries = [],
+    startUrls = [],
+    maxResultsPerQuery = 100,
+    locale = 'en-US',
+    countryCode = 'US',
+    proxyConfiguration: proxyInput,
+} = input;
+
+if (searchQueries.length === 0 && startUrls.length === 0) {
+    await Actor.fail('Either searchQueries or startUrls must be provided');
+    throw new Error('unreachable');
+}
+
+const proxyConfiguration = await Actor.createProxyConfiguration({
+    ...(proxyInput ?? { groups: ['RESIDENTIAL'] }),
+    countryCode, // Always apply countryCode for geo-targeting
+});
 
 const crawler = new PlaywrightCrawler({
     proxyConfiguration,
-    maxRequestsPerCrawl,
     requestHandler: router,
-    launchContext: {
-        launchOptions: {
-            args: [
-                '--disable-gpu', // Mitigates the "crashing GPU process" issue in Docker containers
-            ],
+    maxRequestsPerCrawl: searchQueries.length * maxResultsPerQuery + startUrls.length,
+    maxConcurrency: 3,
+    useSessionPool: true,
+    sessionPoolOptions: {
+        sessionOptions: {
+            maxUsageCount: 5,
+            maxErrorScore: 1,
         },
     },
+    launchContext: {
+        launchOptions: {
+            args: ['--disable-gpu'],
+        },
+    },
+    browserPoolOptions: {
+        preLaunchHooks: [
+            (_pageId, launchContext) => {
+                launchContext.browserContextOptions = Object.assign({}, launchContext.browserContextOptions, {
+                    serviceWorkers: 'block' as const,
+                    // Use a real desktop user agent — Apple Maps redirects to /unsupported for headless browsers
+                    userAgent:
+                        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                    viewport: { width: 1920, height: 1080 },
+                });
+            },
+        ],
+    },
+    preNavigationHooks: [
+        async ({ page, request }) => {
+            // Block service workers via init script
+            await page.addInitScript(() => {
+                Object.defineProperty(navigator, 'serviceWorker', { get: () => undefined });
+            });
+
+            // Block ads and cookie consent dialogs
+            await blockAdsAndConsent(page);
+
+            // Set up network interception BEFORE navigation so we capture API responses
+            const results: AppleMapsResult[] = [];
+            const isPlaceDetail = request.label === 'place';
+            if (isPlaceDetail) {
+                await setupPlaceInterception(page, results);
+            } else {
+                await setupSearchInterception(page, results);
+            }
+            request.userData.interceptedResults = results;
+        },
+    ],
 });
 
-await crawler.run(startUrls);
+const requests: RequestOptions[] = [];
 
-// Exit successfully
+for (const query of searchQueries) {
+    requests.push({
+        url: buildSearchUrl(query, locale),
+        userData: { query },
+    });
+}
+
+for (const startUrl of startUrls) {
+    const url = typeof startUrl === 'string' ? startUrl : startUrl.url;
+    requests.push({
+        url,
+        label: 'place',
+        userData: { query: url },
+    });
+}
+
+log.info(`Starting crawl with ${requests.length} requests`);
+
+await crawler.run(requests);
+
 await Actor.exit();
