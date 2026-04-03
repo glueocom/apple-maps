@@ -1,7 +1,7 @@
 {
     "$schema": "https://apify.com/schemas/v1/actor.ide.json",
     "actorSpecification": 1,
-    "name": "apple-maps-scraper",
+    "name": "apple-maps",
     "title": "Apple Maps Scraper",
     "description": "Scrapes Apple Maps for places, businesses, and POIs via MapKit JS API network interception. Returns name, coordinates, address, category, phone, rating, and more.",
     "version": "0.0",
